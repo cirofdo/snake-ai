@@ -42,6 +42,7 @@ class SnakeGame:
         self.display = pygame.display.set_mode((self.w, self.h))
         pygame.display.set_caption('Snake')
         self.clock = pygame.time.Clock()
+        self.max_score = 0
         
         # init game state
         self.init_state()
@@ -97,8 +98,7 @@ class SnakeGame:
         reset = False
         if self._is_collision():
             reset = True
-            return reset, self.score
-        
+            return reset, self.score, self.max_score
             
         # 4. place new food or just move
         if self.head == self.food:
@@ -112,19 +112,17 @@ class SnakeGame:
         self.clock.tick(SPEED)
         
         # 6. return reset and score
-        return reset, self.score
+        return reset, self.score, self.max_score
     
     def _is_collision(self):
-        # hits boundary
+        # hits boundary or itself
         if (
             self.head.x > self.w - BLOCK_SIZE
             or self.head.x < 0
             or self.head.y > self.h - BLOCK_SIZE
-            or self.head.y < 0
-        ):
-            return True
-        # hits itself
-        if self.head in self.snake[1:]:
+            or self.head.y < 0\
+        ) or (self.head in self.snake[1:]):
+            self.max_score = max(self.score, self.max_score)
             return True
         
         return False
@@ -138,7 +136,9 @@ class SnakeGame:
             
         pygame.draw.rect(self.display, RED, pygame.Rect(self.food.x, self.food.y, BLOCK_SIZE, BLOCK_SIZE))
         
-        text = font.render("Score: " + str(self.score), True, WHITE)
+        text = font.render(
+            "Score: {} | Max Score: {}".format(str(self.score), str(self.max_score)), True, WHITE
+        )
         self.display.blit(text, [0, 0])
         pygame.display.flip()
         
@@ -162,9 +162,10 @@ if __name__ == '__main__':
     
     # game loop
     while True:
-        reset, score = game.play_step()
+        reset, score, max_score = game.play_step()
 
         if reset == True:
+            max_score = max(score, max_score)
             game.init_state()
 
         # if game_over == True:
