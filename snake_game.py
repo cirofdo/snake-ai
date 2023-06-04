@@ -7,6 +7,14 @@ pygame.init()
 font = pygame.font.Font('arial.ttf', 25)
 #font = pygame.font.SysFont('arial', 25)
 
+## Implement modules that agent should control
+# move the snake
+# reset instead of quitting
+# reward system
+
+## New vars
+# number of games
+
 class Direction(Enum):
     RIGHT = 1
     LEFT = 2
@@ -36,6 +44,9 @@ class SnakeGame:
         self.clock = pygame.time.Clock()
         
         # init game state
+        self.init_state()
+
+    def init_state(self):
         self.direction = Direction.RIGHT
         
         self.head = Point(self.w/2, self.h/2)
@@ -70,15 +81,24 @@ class SnakeGame:
                 elif event.key == pygame.K_DOWN:
                     self.direction = Direction.DOWN
         
+        # 1. collect agent input
+        
         # 2. move
         self._move(self.direction) # update the head
         self.snake.insert(0, self.head)
         
-        # 3. check if game over
-        game_over = False
+        # # 3. check if game over
+        # game_over = False
+        # if self._is_collision():
+        #     game_over = True
+        #     return game_over, self.score
+
+        # 3. check if collision -> reset
+        reset = False
         if self._is_collision():
-            game_over = True
-            return game_over, self.score
+            reset = True
+            return reset, self.score
+        
             
         # 4. place new food or just move
         if self.head == self.food:
@@ -90,12 +110,18 @@ class SnakeGame:
         # 5. update ui and clock
         self._update_ui()
         self.clock.tick(SPEED)
-        # 6. return game over and score
-        return game_over, self.score
+        
+        # 6. return reset and score
+        return reset, self.score
     
     def _is_collision(self):
         # hits boundary
-        if self.head.x > self.w - BLOCK_SIZE or self.head.x < 0 or self.head.y > self.h - BLOCK_SIZE or self.head.y < 0:
+        if (
+            self.head.x > self.w - BLOCK_SIZE
+            or self.head.x < 0
+            or self.head.y > self.h - BLOCK_SIZE
+            or self.head.y < 0
+        ):
             return True
         # hits itself
         if self.head in self.snake[1:]:
@@ -136,12 +162,15 @@ if __name__ == '__main__':
     
     # game loop
     while True:
-        game_over, score = game.play_step()
-        
-        if game_over == True:
-            break
+        reset, score = game.play_step()
+
+        if reset == True:
+            game.init_state()
+
+        # if game_over == True:
+        #     break
         
     print('Final Score', score)
-        
+
         
     pygame.quit()
